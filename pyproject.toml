@@ -1,0 +1,108 @@
+[project]
+name = "usbsql_py"
+description = "USB to SQL Data Collection"
+dynamic = ["readme", "version"]
+authors = [{ name = "Glen Springle", email = "glenspringle@gmail.com" }]
+maintainers = [{ name = "Glen Springle", email = "glenspringle@gmail.com" }]
+requires-python = ">= 3.11"
+license = {text = "Proprietary"}
+dependencies = [
+    "pyserial",
+    "argparse",
+]
+
+[project.optional-dependencies]
+dev = [
+    "tox",
+    "build",
+    "pytest",
+    "pytest-cov",
+]
+
+[project.scripts]
+example-script = "usbsql_py.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["tests*"]
+
+[tool.setuptools.dynamic]
+readme = {file = "README.md", content-type = "text/markdown"}
+version = {attr = "usbsql_py.__version__"}
+
+[build-system]
+requires = [ "setuptools >= 35.0.2", "wheel >= 0.29.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.distutils.egg_info]
+egg_base = "build"
+
+[tool.distutils.bdist_wheel]
+universal = true
+
+[tool.coverage.report]
+omit = []
+
+[tool.tox]
+legacy_tox_ini = """
+
+[tox]
+isolated_build = True
+envlist =
+    clean
+    py313
+    # linter
+    # docs
+
+[flake8]
+
+[testenv]
+install_command=python -m pip install {opts}
+depends =
+deps =
+    psutil
+    setuptools
+    wheel
+    coverage
+    pytest-cov
+    pytest
+commands = pytest -v --cov=./proj_name --cov-append --cov-branch --cov-report=term-missing ./tests
+
+[testenv:clean]
+install_command =
+    python -m pip install {opts} {packages}
+deps = coverage[toml]
+skip_install = true
+commands = coverage erase
+
+[testenv:linter]
+install_command =
+    python -m pip install {opts} {packages}
+deps =
+    flake8
+    flake8-bugbear
+    flake8-builtins
+    flake8-comprehensions
+    flake8-string-format
+    black
+    pydocstyle
+commands =
+    # flake8 --ignore=E501
+    # black --check .
+    pydocstyle
+
+[testenv:docs]
+description = invoke sphinx-build to build the HTML docs
+basepython = python3.10
+install_command =
+    python -m pip install {opts} {packages}
+changedir =
+    docs/sphinx
+deps =
+    sphinx
+    sphinx-rtd-theme
+extras =
+    docs
+commands =
+    sphinx-build -M html source build
+"""
