@@ -8,7 +8,7 @@ clean: ## Clean python cache files
 
 setup:
 	@mkdir -p build
-	@python -m venv .venv
+	@/bin/python3 -m venv .venv
 	@source .venv/bin/activate && pip install --upgrade pip
 	@source .venv/bin/activate && pip install '.[dev]'
 
@@ -22,4 +22,4 @@ test:
 	@source .venv/bin/activate && tox
 
 run:
-	@source .venv/bin/activate && python -m proj_name /dev/ttyACM0
+	@source .venv/bin/activate && python -m usbsql_py /dev/ttyACM0
