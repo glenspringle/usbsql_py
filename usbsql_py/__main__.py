@@ -25,88 +25,65 @@ def main():
     print (ser.name)
     state = 0
     while not flag.exit():
-        # Request => $PCC_REQ_SN*<xx>
+        # Request => $PCC_REQ_STATUS*<xx>
         #       <xx> = checksum
         if (state==0):
-            ser.write('$PCC_REQ_SN*xx\n'.encode('utf-8'))
-            reqSNTime=time()
+            ser.write('$PCC_REQ_STATUS*xx\n'.encode('utf-8'))
+            reqStatusTime=time()
             state = 1
-        # Response => $PCC_SN,<serial number string>*<xx>
+        # Response => $PCC_SN,<serial number string>,year,month,date,seconds,entryCount,lastEntry*<xx>
         #       <xx> = checksum
         elif (state==1):
             string=ser.readline()
             strText=string.decode('utf-8')
-# Debugging
-#            if (ser.in_waiting > 0):
-#                string=ser.read()
-#                strText=string.decode('utf-8')
-#                print(strText)
-#                if strText=='*':
-#                    state=0
             strRESplit=re.split(r"[,|*|\s]", strText)
-            if (strRESplit[0] == "$PCC_SN"):
+            if (strRESplit[0] == "$PCC_STATUS"):
                 #print (strRESplit)
                 serialNumber = strRESplit[1]
-                print ("S/N:",serialNumber)
+                year    = strRESplit[2]
+                month   = strRESplit[3]
+                date    = strRESplit[4]
+                seconds = strRESplit[5]
+                entryCount= strRESplit[6]
+                lastEntry = strRESplit[7]
+                print ("S/N,Y,M,D,S,E,L:{sn},{year},{month},{day},{sec},{ec},{le}".format(sn=serialNumber,year=year,month=month,day=date,sec=seconds,ec=entryCount,le=lastEntry))
+                pollCount = int(entryCount) # prepare for Use Time Requests
                 state = 2
             else:
                 state = 0
-        # Request => $PCC_REQ_TIME*<xx>
-        elif (state==2):
-            ser.write('$PCC_REQ_TIME*xx\n'.encode('utf-8'))
-            state = 3
-        # Response => $PCC_TIME,<year>,<month>,<day>,<seconds>*<xx>
-        #       <year>,<month>,<day> = date
-        #       <seconds> = time since midnight in seconds
-        elif (state==3):
-            string=ser.readline()
-            strText=string.decode('utf-8')
-            strRESplit=re.split(r"[,|*|\s]", strText)
-            if (strRESplit[0] == "$PCC_TIME"):
-                #print (strRESplit)
-                deviceYear  = strRESplit[1]
-                deviceMonth = strRESplit[2]
-                deviceDay   = strRESplit[3]
-                deviceTime  = strRESplit[4]
-                print ("Device Time(Y,M,D,T): {year},{month},{day},{time}".format(year=deviceYear,month=deviceMonth,day=deviceDay,time=deviceTime))
-                state = 4
-                pollCount=0 # prepare for Use Time Requests
-            else:
-                state = 0
         # Request => $PCC_REQ_USETIME,<count>*<xx>
-        #        <count> = 0 is most recent time the device was used
-        #        <count> = 1 is next most recent time the device was used
-        elif (state==4):
+        #        <count> = entryCount is most recent time the device was used
+        #        <count> = entryCount-1 is next most recent time the device was used
+        #        <count> = lastEntry is last entry in the device log
+        elif (state==2):
             reqStr="$PCC_REQ_USETIME,{}*xx\n".format(pollCount)
             #print(reqStr)
             ser.write(reqStr.encode('utf-8'))
-            state = 5
-        # Response => $PCC_USETIME,<count>,<index>,<year>,<month>,<day>,<seconds>*<xx>
-        #        <count> = 0 is most recent time the device was used
-        #        <count> = 1 is next most recent time the device was used
-        #        <index> is an identifier count that starts from
-        #               zero (0) when the device was new
-        #       <year>,<month>,<day> = date
-        #       <seconds> = time since midnight in seconds
-        elif (state==5):
+            state = 3
+        # Response => $PCC_USETIME,<count>,<index>,<year>,<month>,<date>,<seconds>*<xx>
+        #        <count> = entryCount is most recent time the device was used
+        #        <count> = entryCount-1 is next most recent time the device was used
+        #        <count> = lastEntry is last entry in the device log
+        #        <year>,<month>,<date> = date
+        #        <seconds> = time since midnight in seconds
+        elif (state==3):
             string=ser.readline()
             strText=string.decode('utf-8')
             strRESplit=re.split(r"[,|*|\s]", strText)
             if (strRESplit[0] == "$PCC_USETIME"):
                 #print (strRESplit)
                 devicePollCount= strRESplit[1]
-                deviceUseIndex = strRESplit[2]
-                deviceUseYear  = strRESplit[3]
-                deviceUseMonth = strRESplit[4]
-                deviceUseDay   = strRESplit[5]
-                deviceUseTime  = strRESplit[6]
-                print ("Count,Index,Y,M,D,T: {count},{index},{year},{month},{day},{time}".format(count=devicePollCount,index=deviceUseIndex,year=deviceUseYear,month=deviceUseMonth,day=deviceUseDay,time=deviceUseTime))
+                deviceUseYear  = strRESplit[2]
+                deviceUseMonth = strRESplit[3]
+                deviceUseDay   = strRESplit[4]
+                deviceUseTime  = strRESplit[5]
+                print ("Count,Y,M,D,T: {count},{year},{month},{day},{sec}".format(count=devicePollCount,year=deviceUseYear,month=deviceUseMonth,day=deviceUseDay,sec=deviceUseTime))
                 #print ("Use Index: ",deviceUseIndex)
-                if (deviceUseIndex != '0'):
-                    pollCount=1+pollCount
-                    state = 4
+                if (pollCount != int(lastEntry)):
+                    pollCount=pollCount - 1
+                    state = 2
                 else:
-                    diffTime=time()-reqSNTime
+                    diffTime=time()-reqStatusTime
                     print(f"{diffTime:.3f} sec")
                     print("No more data")
                     state = 0
