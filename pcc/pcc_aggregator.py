@@ -10,6 +10,8 @@ from time import time, sleep
 from datetime import datetime, UTC
 from . import PUB_DEVICE, PUB_ENTRY, PUB_LOG, DEFAULT_ZMQ_AGGREGATOR_TRANSPORT, DEFAULT_SQL_LOCATION, DEFAULT_TIME_FORMAT
 from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from contextlib import asynccontextmanager
 from sqlmodel import Field, Session, SQLModel, create_engine, select, desc, asc
 from typing import List
@@ -60,6 +62,7 @@ async def lifespan(app: FastAPI):
     gather_task.cancel()
 
 app = FastAPI(lifespan=lifespan)
+app.mount("/html", StaticFiles(directory="html", html=True), name="static")
 
 async def zmq_gatherer(zctx: zmq.asyncio.Context, db_engine, gather_transport: str):
     try:
@@ -161,6 +164,11 @@ async def get_device_list(request: Request):
             entries.append(entry.model_dump())
 
     return entries
+
+
+@app.get("/")
+def redirect_to_static():
+    return RedirectResponse(url="/html")
 
 def main():
     parser = argparse.ArgumentParser(prog="pcc-aggregator", description="Aggregator for USB device data")

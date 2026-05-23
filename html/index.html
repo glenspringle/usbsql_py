@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Device Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f3ef;
+    --surface: #ffffff;
+    --surface-2: #f9f8f5;
+    --border: rgba(0,0,0,0.10);
+    --border-strong: rgba(0,0,0,0.18);
+    --text-primary: #1a1a18;
+    --text-secondary: #5f5e5a;
+    --text-hint: #888780;
+    --accent: #185fa5;
+    --accent-light: #e6f1fb;
+    --accent-mid: #b5d4f4;
+    --success: #0f6e56;
+    --success-light: #e1f5ee;
+    --font-ui: system-ui, -apple-system, sans-serif;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --sidebar-w: 260px;
+    --header-h: 56px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #18181a;
+      --surface: #222224;
+      --surface-2: #2a2a2c;
+      --border: rgba(255,255,255,0.09);
+      --border-strong: rgba(255,255,255,0.16);
+      --text-primary: #e8e7e2;
+      --text-secondary: #a8a7a2;
+      --text-hint: #6b6a66;
+      --accent: #378add;
+      --accent-light: #042c53;
+      --accent-mid: #0c447c;
+      --success: #1d9e75;
+      --success-light: #04342c;
+    }
+  }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text-primary);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    height: var(--header-h);
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #1d9e75;
+    margin-left: 4px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  aside {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 0.5px solid var(--border-strong);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-header {
+    padding: 14px 16px;
+    border-bottom: 0.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .sidebar-header span {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-hint);
+  }
+
+  .device-count {
+    font-size: 11px;
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+
+  .device-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+  }
+
+  .device-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: 0.5px solid transparent;
+    transition: background 0.12s;
+  }
+
+  .device-item:hover { background: var(--surface-2); }
+
+  .device-item.active {
+    background: var(--accent-light);
+    border-color: var(--accent-mid);
+  }
+
+  .device-item.active .device-serial { color: var(--accent); }
+  .device-item.active .device-id-label { color: var(--accent); opacity: 0.7; }
+
+  .device-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    border: 0.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .device-item.active .device-icon {
+    background: var(--accent-light);
+    border-color: var(--accent-mid);
+  }
+
+  .device-icon i { font-size: 16px; color: var(--text-secondary); }
+  .device-item.active .device-icon i { color: var(--accent); }
+
+  .device-info { min-width: 0; }
+
+  .device-serial {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .device-id-label {
+    font-size: 11px;
+    color: var(--text-hint);
+    margin-top: 1px;
+  }
+
+  main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text-hint);
+  }
+
+  .empty-state i { font-size: 40px; opacity: 0.4; }
+  .empty-state p { font-size: 15px; }
+
+  .device-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .device-header h1 {
+    font-size: 20px;
+    font-weight: 500;
+    font-family: 'Courier New', monospace;
+    color: var(--text-primary);
+  }
+
+  .badge {
+    font-size: 11px;
+    background: var(--success-light);
+    color: var(--success);
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+  }
+
+  .stat-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  .stat-value { font-size: 22px; font-weight: 500; color: var(--text-primary); line-height: 1.2; }
+  .stat-sub { font-size: 11px; color: var(--text-hint); margin-top: 4px; }
+
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-hint);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-title i { font-size: 14px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+  thead th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-hint);
+    border-bottom: 0.5px solid var(--border-strong);
+    background: var(--surface-2);
+  }
+
+  tbody tr { border-bottom: 0.5px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+
+  tbody td { padding: 10px 14px; vertical-align: middle; }
+  tbody td.mono { font-family: 'Courier New', monospace; font-size: 12px; }
+  tbody td.muted { color: var(--text-secondary); }
+
+  .idx-badge {
+    display: inline-block;
+    background: var(--surface-2);
+    border: 0.5px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 14px;
+    border-top: 0.5px solid var(--border);
+    margin-top: 4px;
+  }
+
+  .pag-info { font-size: 12px; color: var(--text-hint); }
+  .pag-btns { display: flex; gap: 6px; }
+
+  .pag-btn {
+    background: none;
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.12s;
+  }
+
+  .pag-btn:hover:not(:disabled) { background: var(--surface-2); }
+  .pag-btn:disabled { opacity: 0.35; cursor: default; }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="logo.png" alt="Logo" style="height:32px;width:auto;display:block;" />
+  <div class="pulse-dot" title="Live — polling every second"></div>
+</header>
+
+<div class="layout">
+  <aside>
+    <div class="sidebar-header">
+      <span>Devices</span>
+      <span class="device-count" id="deviceCount">0</span>
+    </div>
+    <div class="device-list" id="deviceList"></div>
+  </aside>
+  <main id="mainArea">
+    <div class="empty-state">
+      <i class="ti ti-cpu-off" aria-hidden="true"></i>
+      <p>Select a device</p>
+    </div>
+  </main>
+</div>
+
+<script>
+const BASE = 'http://localhost:8080';
+const PAGE_SIZE = 20;
+
+const state = {
+  devices: [],
+  selectedSerial: null,
+  entries: [],
+  page: 0,
+  chart: null,
+  lastEntryCount: 0,
+};
+
+async function pollDevices() {
+  try {
+    const res = await fetch(`${BASE}/device_list`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const changed = JSON.stringify(data.map(d => d.id)) !== JSON.stringify(state.devices.map(d => d.id));
+    if (changed) {
+      state.devices = data;
+      renderDeviceList();
+    }
+  } catch {}
+}
+
+async function pollEntries() {
+  if (!state.selectedSerial) return;
+  try {
+    const res = await fetch(`${BASE}/device/${encodeURIComponent(state.selectedSerial)}/entries`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.length !== state.lastEntryCount) {
+      state.entries = data;
+      state.lastEntryCount = data.length;
+      renderMain();
+    }
+  } catch {}
+}
+
+function renderDeviceList() {
+  const list = document.getElementById('deviceList');
+  document.getElementById('deviceCount').textContent = state.devices.length;
+  list.innerHTML = state.devices.map(d => `
+    <div class="device-item${state.selectedSerial === d.serial_num ? ' active' : ''}" onclick="selectDevice('${esc(d.serial_num)}')">
+      <div class="device-icon"><i class="ti ti-cpu" aria-hidden="true"></i></div>
+      <div class="device-info">
+        <div class="device-serial">${esc(d.serial_num)}</div>
+        <div class="device-id-label">ID #${d.id}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectDevice(serial) {
+  state.selectedSerial = serial;
+  state.page = 0;
+  state.entries = [];
+  state.lastEntryCount = 0;
+  renderDeviceList();
+  pollEntries();
+}
+
+function renderMain() {
+  const entries = state.entries;
+  const main = document.getElementById('mainArea');
+
+  if (!entries.length) {
+    main.innerHTML = `
+      <div class="device-header">
+        <h1>${esc(state.selectedSerial)}</h1>
+      </div>
+      <div class="empty-state"><i class="ti ti-database-off" aria-hidden="true"></i><p>No entries</p></div>`;
+    return;
+  }
+
+  const sorted = [...entries].sort((a, b) => new Date(a.entry_time) - new Date(b.entry_time));
+  const latest = entries[0];
+  const earliest = sorted[0];
+  const lastSynced = entries.reduce((max, e) => new Date(e.event_time) > new Date(max) ? e.event_time : max, entries[0].event_time);
+  const totalPages = Math.ceil(entries.length / PAGE_SIZE);
+  const pageEntries = entries.slice(state.page * PAGE_SIZE, (state.page + 1) * PAGE_SIZE);
+
+  main.innerHTML = `
+    <div class="device-header">
+      <h1>${esc(state.selectedSerial)}</h1>
+      <span class="badge">${entries.length} entries</span>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total entries</div>
+        <div class="stat-value">${entries.length.toLocaleString()}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Latest entry</div>
+        <div class="stat-value" style="font-size:15px">${fmtDate(latest.entry_time)}</div>
+        <div class="stat-sub">${fmtTime(latest.entry_time)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Earliest entry</div>
+        <div class="stat-value" style="font-size:15px">${fmtDate(earliest.entry_time)}</div>
+        <div class="stat-sub">${fmtTime(earliest.entry_time)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Last synced</div>
+        <div class="stat-value" style="font-size:15px">${fmtDate(lastSynced)}</div>
+        <div class="stat-sub">${fmtTime(lastSynced)}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-clock" aria-hidden="true"></i> Dispenses by time of day</div>
+      <div style="position:relative;width:100%;height:200px">
+        <canvas id="entryChart" role="img" aria-label="Line chart of device entries over time"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-table" aria-hidden="true"></i> Entry history</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Index</th>
+            <th>Dispense time</th>
+            <th>Synced</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pageEntries.map(e => `<tr>
+              <td><span class="idx-badge">#${e.entry_idx ?? e.id}</span></td>
+              <td class="mono">${fmtDateTime(e.entry_time)}</td>
+              <td class="mono muted">${fmtDateTime(e.event_time)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="pagination">
+        <span class="pag-info">Showing ${state.page * PAGE_SIZE + 1}–${Math.min((state.page + 1) * PAGE_SIZE, entries.length)} of ${entries.length.toLocaleString()}</span>
+        <div class="pag-btns">
+          <button class="pag-btn" onclick="changePage(-1)" ${state.page === 0 ? 'disabled' : ''}><i class="ti ti-chevron-left"></i> Prev</button>
+          <button class="pag-btn" onclick="changePage(1)" ${state.page >= totalPages - 1 ? 'disabled' : ''}>Next <i class="ti ti-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  renderChart(entries);
+}
+
+function renderChart(entries) {
+  const buckets = new Array(48).fill(0);
+  entries.forEach(e => {
+    const d = new Date(e.entry_time);
+    const slot = d.getHours() * 2 + (d.getMinutes() >= 30 ? 1 : 0);
+    buckets[slot]++;
+  });
+  const labels = Array.from({length: 48}, (_, i) => {
+    const h = Math.floor(i / 2);
+    const m = i % 2 === 0 ? '00' : '30';
+    const ampm = h < 12 ? 'am' : 'pm';
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return i % 4 === 0 ? `${h12}${ampm}` : '';
+  });
+  const data = buckets;
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const barColor = isDark ? '#378add' : '#185fa5';
+  const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const textColor = isDark ? '#a8a7a2' : '#5f5e5a';
+  const canvas = document.getElementById('entryChart');
+  if (!canvas) return;
+  if (state.chart) { state.chart.destroy(); state.chart = null; }
+  state.chart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Dispenses',
+        data,
+        backgroundColor: barColor,
+        borderWidth: 0,
+        borderRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: textColor, font: { size: 11 }, autoSkip: false, maxRotation: 0 } },
+        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 }, precision: 0 }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function changePage(dir) {
+  const totalPages = Math.ceil(state.entries.length / PAGE_SIZE);
+  state.page = Math.max(0, Math.min(state.page + dir, totalPages - 1));
+  renderMain();
+}
+
+function fmtDate(iso) {
+  try { return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); } catch { return iso; }
+}
+function fmtTime(iso) {
+  try { return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }); } catch { return ''; }
+}
+function fmtDateTime(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' }) + ' ' +
+           d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  } catch { return iso; }
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+setInterval(() => { pollDevices(); pollEntries(); }, 1000);
+pollDevices();
+</script>
+</body>
+</html>
