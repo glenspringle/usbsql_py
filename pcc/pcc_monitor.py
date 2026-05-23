@@ -147,22 +147,23 @@ def main():
             earliest_idx = int(status_msg_parts[7])
             dev_time = convert_to_datetime(dev_year, dev_month, dev_day, dev_seconds)
 
-            year, month, day, seconds = convert_to_date_format(datetime.now(UTC))
-            resp = send_request(ser,[PCC_REQ_UPDATE, earliest_idx, year, month, day, seconds])
-            if not resp:
-                continue
-
-            if latest_idx == 0:
-                continue
-
-            if last_device_and_idx != None:
-                if last_device_and_idx == (dev_serial, latest_idx):
-                    continue
 
             # Only publish this device connected if its not been sent up yet
             # We don't want to bother 'reading' this device, if it won't be logged!
             resp = publish_device(zdata, dev_serial, dev_time)
             if resp is not None:
+                year, month, day, seconds = convert_to_date_format(datetime.now(UTC))
+                res = send_request(ser,[PCC_REQ_UPDATE, resp, year, month, day, seconds])
+                if not res:
+                    continue
+
+                if latest_idx == 0:
+                   continue
+
+                if last_device_and_idx != None:
+                    if last_device_and_idx == (dev_serial, latest_idx):
+                        continue
+
                 earliest_idx = max(earliest_idx, resp)
                 if resp != latest_idx:
                     for n in range(earliest_idx, latest_idx+1):
