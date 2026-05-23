@@ -1,0 +1,12 @@
+[Unit]
+Description=PCC Monitor Service
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/home/gspringle/Documents/GitHub/usbsql_py/
+ExecStart=/home/gspringle/Documents/GitHub/usbsql_py/.venv/bin/pcc-monitor /dev/ttyACM0
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
