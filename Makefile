@@ -21,8 +21,11 @@ test:
 	@mkdir -p build
 	@source .venv/bin/activate && tox
 
-run:
-	@source .venv/bin/activate && python -m pcc /dev/ttyACM0
+run-monitor:
+	@source .venv/bin/activate && python -m pcc.pcc_monitor /dev/ttyACM0
+
+run-aggregator:
+	@source .venv/bin/activate && python -m pcc.pcc_aggregator
 
 docker-build:
 	docker build -t pcc .

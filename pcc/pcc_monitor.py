@@ -20,8 +20,10 @@ flag = GracefulExiter()
 def send_request(ser: serial.Serial, msg: list):
     try:
         payload = nmea0183_create(msg)
+        print(payload.encode('utf-8'))
         ser.write(payload.encode('utf-8'))
         resp = ser.readline()
+        print(resp.decode('utf-8'))
         if resp == b'':
             return None
         else:
