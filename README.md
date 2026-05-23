@@ -1,4 +1,4 @@
-# usbsql_py
+# pcc
 USB data collection to SQL data storage
 
 To build the virual environment (.venv):

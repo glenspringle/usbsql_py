@@ -1,5 +1,5 @@
 [project]
-name = "usbsql_py"
+name = "pcc"
 description = "USB to SQL Data Collection"
 dynamic = ["readme", "version"]
 authors = [{ name = "Glen Springle", email = "glenspringle@gmail.com" }]
@@ -7,8 +7,12 @@ maintainers = [{ name = "Glen Springle", email = "glenspringle@gmail.com" }]
 requires-python = ">= 3.11"
 license = {text = "Proprietary"}
 dependencies = [
-    "pyserial",
-    "argparse",
+    "pyudev==0.24.4",
+    "pyzmq==27.1.0",
+    "pyserial==3.5",
+    "argparse==1.4.0",
+    "fastapi[standard]==0.136.1",
+    "sqlmodel==0.0.38",
 ]
 
 [project.optional-dependencies]
@@ -20,7 +24,9 @@ dev = [
 ]
 
 [project.scripts]
-example-script = "usbsql_py.__main__:main"
+pcc-monitor = "pcc.pcc_monitor:main"
+pcc-aggregator = "pcc.pcc_aggregator:main"
+fake_dispenser = "pcc.fake_dispenser:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -28,7 +34,7 @@ exclude = ["tests*"]
 
 [tool.setuptools.dynamic]
 readme = {file = "README.md", content-type = "text/markdown"}
-version = {attr = "usbsql_py.__version__"}
+version = {attr = "pcc.__version__"}
 
 [build-system]
 requires = [ "setuptools >= 35.0.2", "wheel >= 0.29.0"]
@@ -51,10 +57,6 @@ isolated_build = True
 envlist =
     clean
     py313
-    # linter
-    # docs
-
-[flake8]
 
 [testenv]
 install_command=python -m pip install {opts}
@@ -66,7 +68,7 @@ deps =
     coverage
     pytest-cov
     pytest
-commands = pytest -v --cov=./proj_name --cov-append --cov-branch --cov-report=term-missing ./tests
+commands = pytest -v --cov=./pcc --cov-append --cov-branch --cov-report=term-missing ./tests
 
 [testenv:clean]
 install_command =
@@ -74,35 +76,4 @@ install_command =
 deps = coverage[toml]
 skip_install = true
 commands = coverage erase
-
-[testenv:linter]
-install_command =
-    python -m pip install {opts} {packages}
-deps =
-    flake8
-    flake8-bugbear
-    flake8-builtins
-    flake8-comprehensions
-    flake8-string-format
-    black
-    pydocstyle
-commands =
-    # flake8 --ignore=E501
-    # black --check .
-    pydocstyle
-
-[testenv:docs]
-description = invoke sphinx-build to build the HTML docs
-basepython = python3.10
-install_command =
-    python -m pip install {opts} {packages}
-changedir =
-    docs/sphinx
-deps =
-    sphinx
-    sphinx-rtd-theme
-extras =
-    docs
-commands =
-    sphinx-build -M html source build
 """

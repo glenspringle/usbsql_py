@@ -1,0 +1,1 @@
+ACTION=="add", SUBSYSTEM=="tty", ENV{ID_BUS}=="usb", RUN+="/usr/local/bin/pcc-processor $devnode & disown"

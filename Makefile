@@ -22,4 +22,7 @@ test:
 	@source .venv/bin/activate && tox
 
 run:
-	@source .venv/bin/activate && python -m usbsql_py /dev/ttyACM0
+	@source .venv/bin/activate && python -m pcc /dev/ttyACM0
+
+docker-build:
+	docker build -t pcc .

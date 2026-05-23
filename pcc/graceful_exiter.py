@@ -21,6 +21,9 @@ class GracefulExiter():
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         self.state = True
 
-    def exit(self):
+    def flag_for_exit(self):
+        self.state = True
+
+    def ready_to_exit(self):
         """Repeatedly call this to see if SIGINT has occurred."""
         return self.state

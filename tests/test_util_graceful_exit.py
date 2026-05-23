@@ -1,11 +1,11 @@
 import os
 import signal
-from proj_name.graceful_exiter import GracefulExiter
+from pcc.graceful_exiter import GracefulExiter
 
 
 def test_graceful_exiter():
     flag = GracefulExiter()
-    while not flag.exit():
+    while not flag.ready_to_exit():
         # Induces GracefulExiter.change_state
         os.kill(os.getpid(), signal.SIGINT)
 
