@@ -12,6 +12,7 @@ from . import PUB_DEVICE, PUB_ENTRY, PUB_LOG, DEFAULT_ZMQ_AGGREGATOR_TRANSPORT, 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from sqlmodel import Field, Session, SQLModel, create_engine, select, desc, asc
 from typing import List
@@ -64,6 +65,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.mount("/html", StaticFiles(directory="html", html=True), name="static")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],      # Allows all origins
+    allow_credentials=True,   # Allows cookies and auth headers
+    allow_methods=["*"],      # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],      # Allows all headers
+)
 async def zmq_gatherer(zctx: zmq.asyncio.Context, db_engine, gather_transport: str):
     try:
 
