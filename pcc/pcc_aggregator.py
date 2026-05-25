@@ -121,9 +121,13 @@ async def zmq_gatherer(zctx: zmq.asyncio.Context, db_engine, gather_transport: s
 
                         device_id = get_device_id_by_serial(session, device_serial)
                         if device_id:
-                            entry = DeviceEntry(device_id=device_id, event_time=msg_ts, entry_time=entry_time, entry_idx=entry_idx)
-                            session.add(entry)
-                            session.commit()
+                            # Check for existing entry
+                            res = session.exec(select(DeviceEntry).where(DeviceEntry.device_id == device_id and DeviceEntry.entry_idx==entry_idx))
+                            found_entry = res.first()
+                            if not found_entry:
+                                entry = DeviceEntry(device_id=device_id, event_time=msg_ts, entry_time=entry_time, entry_idx=entry_idx)
+                                session.add(entry)
+                                session.commit()
 
                     elif msg_type == PUB_LOG:
                         pass
