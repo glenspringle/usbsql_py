@@ -489,7 +489,7 @@ function renderMain() {
         </thead>
         <tbody>
           ${pageEntries.map(e => `<tr>
-              <td><span class="idx-badge">#${e.entry_idx ?? e.id}</span></td>
+              <td><span class="idx-badge">#${e.id}</span></td>
               <td class="mono">${fmtDateTime(e.entry_time)}</td>
               <td class="mono muted">${fmtDateTime(e.event_time)}</td>
             </tr>`).join('')}
