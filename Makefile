@@ -27,5 +27,9 @@ run-monitor:
 run-aggregator:
 	@source .venv/bin/activate && python -m pcc.pcc_aggregator
 
+run-fake:
+	@source .venv/bin/activate && python -m pcc.fake_dispenser  /dev/ttyUSB1
+
+
 docker-build:
 	docker build -t pcc .

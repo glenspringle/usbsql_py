@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from sqlmodel import Field, Session, SQLModel, create_engine, select, desc, asc
+from sqlmodel import Field, Session, SQLModel, create_engine, select, desc, asc, and_
 from typing import List
 import json
 
@@ -122,7 +122,7 @@ async def zmq_gatherer(zctx: zmq.asyncio.Context, db_engine, gather_transport: s
                         device_id = get_device_id_by_serial(session, device_serial)
                         if device_id:
                             # Check for existing entry
-                            res = session.exec(select(DeviceEntry).where(DeviceEntry.device_id == device_id and DeviceEntry.entry_idx==entry_idx))
+                            res = session.exec(select(DeviceEntry).where(and_(DeviceEntry.device_id == device_id,DeviceEntry.entry_idx == entry_idx)))
                             found_entry = res.first()
                             if not found_entry:
                                 entry = DeviceEntry(device_id=device_id, event_time=msg_ts, entry_time=entry_time, entry_idx=entry_idx)
