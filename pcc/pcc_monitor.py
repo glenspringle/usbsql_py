@@ -166,7 +166,7 @@ def main():
 
                 earliest_idx = max(earliest_idx, resp)
                 if resp != latest_idx:
-                    for n in range(earliest_idx, latest_idx+1):
+                    for n in range(earliest_idx+1, latest_idx+1):
                         resp = send_request(ser, [PCC_REQ_USAGE, n])
                         if not resp:
                             publish_log(zdata, f"Timeout receiving usage entry")
