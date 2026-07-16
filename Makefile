@@ -24,6 +24,12 @@ test:
 run-monitor:
 	@source .venv/bin/activate && python -m pcc.pcc_monitor /dev/ttyACM0
 
+run-monitor-1:
+	@source .venv/bin/activate && python -m pcc.pcc_monitor /dev/ttyACM1
+
+run-monitor-2:
+	@source .venv/bin/activate && python -m pcc.pcc_monitor /dev/ttyACM2
+
 run-aggregator:
 	@source .venv/bin/activate && python -m pcc.pcc_aggregator
 
